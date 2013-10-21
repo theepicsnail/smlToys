@@ -13,26 +13,42 @@ fun ttyWrapper(cb) =
   end
   handle Exception => (* fix after ctrl-c *)
     (OS.Process.system("/bin/stty -F /dev/tty sane");())
-val KEY_UP   = "\^[[A";
-val KEY_DOWN = "\^[[B";
-val KEY_RIGHT= "\^[[C";
-val KEY_LEFT = "\^[[D";
 
+
+datatype KEY = KEY_UP 
+             | KEY_DOWN 
+             | KEY_LEFT 
+             | KEY_RIGHT 
+             | KEY_NONE
+             | KEY_OTHER of string;
+
+fun getKey(): KEY = 
+  let 
+    val c = getCh()
+  in
+    case c of
+      SOME "\^[[A" => KEY_UP
+    | SOME "\^[[B" => KEY_DOWN
+    | SOME "\^[[C" => KEY_RIGHT
+    | SOME "\^[[D" => KEY_LEFT
+    | NONE => KEY_NONE
+    | SOME x => KEY_OTHER(x)
+  end
 
 
 fun main() = 
   while (true) 
   do (
     let 
-      val c = getCh()
+      val k = getKey()
     in
-      case c of 
-          NONE => ()
-        | SOME "\^[[B" => print("DOWN")
-        | SOME KEY_UP => print("UP")
-        | SOME KEY_LEFT => print("LEFT")
-        | SOME KEY_RIGHT => print("RIGHT")
-        | SOME v => print(v)
+      case k of 
+          KEY_NONE => ()
+        | KEY_UP => print("UP")
+        | KEY_DOWN => print("DOWN")
+        | KEY_RIGHT => print("RIGHT")
+        | KEY_LEFT  => print("LEFT")
+        | KEY_OTHER(x) => print(x)
     end 
   );
 
